@@ -5,17 +5,19 @@
 #include <unordered_map>
 
 #include "ogfx/util/Logger.h"
+#include "ogfx/util/Misc.h"
 
-#define OGFX_EVENT_CLASS(id) static uint64_t GetId() {return id;}\
-    void Dispatch() override {EventManager::Dispatch(*this);}
+#define OGFX_EVENT_CLASS(name_str) static uint64_t GetId() { \
+    static constexpr uint64_t id = ogfx::HashString(name_str); \
+    return id; \
+} \
+    void Dispatch() {ogfx::EventManager::Dispatch(*this);}
 
 namespace ogfx {
     struct Event {
-        virtual ~Event() {}
+        static void Dispatch() {OGFX_ASSERT_STR(false, "Event subclasses must contain 'OGFX_EVENT_CLASS'.");}
 
-        virtual void Dispatch() = 0;
-
-        static uint64_t GetId() {OGFX_ASSERT_STR(false, "Event subclasses must implement 'GetId'."); return 0;}
+        static uint64_t GetId() {OGFX_ASSERT_STR(false, "Event subclasses must contain 'OGFX_EVENT_CLASS'."); return 0;}
     };
 
     template<std::derived_from<Event> EventType>
@@ -24,7 +26,7 @@ namespace ogfx {
         friend class EventManager;
         using EventT = EventType;
 
-        std::function<void(const EventType&)> OnEvent = nullptr;
+        std::function<void(EventType&)> OnEvent = nullptr;
     protected:
         inline static constexpr uint64_t INVALID_ID = std::numeric_limits<uint64_t>::max();
 
