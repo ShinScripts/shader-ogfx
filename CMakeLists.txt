@@ -19,10 +19,7 @@ set(ogfx-core-includes
     ${CMAKE_CURRENT_LIST_DIR}/extern/lml/include
     ${CMAKE_CURRENT_LIST_DIR}/extern/imgui
     ${CMAKE_CURRENT_LIST_DIR}/extern
-    ${CMAKE_CURRENT_LIST_DIR}/../../extern/entt/src
-    ${CMAKE_CURRENT_LIST_DIR}/core/include
     $ENV{VULKAN_SDK}/Include
-    CACHE STRING ""
 )
 
 set(ogfx-core-libs
@@ -32,7 +29,6 @@ set(ogfx-core-libs
     glfw
     ${Vulkan_LIBRARIES}
     spirv-cross-cpp
-    CACHE STRING ""
 )
 
 add_subdirectory(core)

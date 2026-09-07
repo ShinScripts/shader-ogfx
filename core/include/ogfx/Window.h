@@ -16,7 +16,7 @@ namespace ogfx {
         friend void GlfwSizeCallback(GLFWwindow* p_glfw_window, int width, int height);
     public:
         struct ResizeEvent : ogfx::Event {
-            OGFX_EVENT_CLASS("ResizeEvent");
+            OGFX_EVENT_CLASS(92837463462);
 
             uint32_t prev_width;
             uint32_t prev_height;

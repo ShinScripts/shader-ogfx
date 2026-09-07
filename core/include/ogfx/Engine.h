@@ -23,7 +23,7 @@
 
 namespace ogfx {
     struct ShutdownEvent : Event {
-        OGFX_EVENT_CLASS("ShutdownEvent");
+        OGFX_EVENT_CLASS(273791929378);
     };
 
     struct ImGuiRenderData {

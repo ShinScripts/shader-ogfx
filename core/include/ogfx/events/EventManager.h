@@ -28,7 +28,7 @@ namespace ogfx {
         }
 
         template<std::derived_from<Event> EventT>
-        static void Dispatch(EventT& _event) {
+        static void Dispatch(const EventT& _event) {
             uint64_t id = EventT::GetId();
 
             std::scoped_lock l{Get().m_mux};
