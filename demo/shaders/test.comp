@@ -2,15 +2,64 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
+// Pass elapsed time (in seconds)
 layout(push_constant) uniform PushConstants {
-    float v;
-} pc;
+    float time;
+} push_constants;
 
 layout(set = 0, binding = 0, rgba8) uniform image2D storageImage;
 
-void main() {
-    ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
-    vec2 normalized = vec2(texel_coord) / vec2(1920, 1080);
+// --------------
+// https://gist.github.com/clauswilke/c39feab04463b779200dfa68d6890b5a
+float rand(vec2 n) {
+    return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+}
 
-    imageStore(storageImage, texel_coord, vec4(normalized.xy, pc.v, 1.0));
+float noise(vec2 p){
+    vec2 ip = floor(p);
+    vec2 u = fract(p);
+    u = u*u*(3.0-2.0*u);
+
+    float res = mix(
+        mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
+        mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);
+    return res*res;
+}
+
+// --------------
+
+#define OCTAVES 6
+float fbm (vec2 st) { // https://thebookofshaders.com/13/
+                      // Initial values
+                      float value = 0.0;
+                      float amplitude = .5;
+                      float frequency = 0.;
+
+                      // Loop of octaves
+                      for (int i = 0; i < OCTAVES; i++) {
+                          value += amplitude * noise(st);
+                          st *= 2.;
+                          amplitude *= .5;
+                      }
+                      return value;
+}
+
+void main() {
+    vec2 pixel_coordinate = vec2(gl_GlobalInvocationID.xy);
+    vec2 image_resolution = vec2(imageSize(storageImage));
+
+    // center and normalize coordinates
+    vec2 uv = (pixel_coordinate - 0.5 * image_resolution.xy) / image_resolution.y;
+
+    // distance from the center
+    float r = length(uv);
+
+    // soft circle
+    float circle = smoothstep(0.4, 0.0, r);
+
+    // multiply the circle by the noise and color (https://ohmycolor.app/color-picker/)
+    vec3 color = vec3(0.1, 0.6, 0.9) * circle;
+
+    vec4 final_color = vec4(color, 1.0);
+    imageStore(storageImage, ivec2(pixel_coordinate), final_color);
 }

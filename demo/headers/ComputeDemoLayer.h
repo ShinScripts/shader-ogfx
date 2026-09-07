@@ -29,8 +29,10 @@ public:
             OGFX_VK_CHECK(ogfx::VkContext::GetLogicalDevice().device.createSemaphore(&semaphore_create_info, nullptr, &m_frame_data[i].render_semaphore));
         }
 
+        system("glslc C:\\Users\\shin\\Desktop\\ogfx\\demo\\shaders\\test.comp -o C:\\Users\\shin\\Desktop\\ogfx\\demo\\shaders\\test.comp.spirv");
+
         compute_shader
-        .AddStage(vk::ShaderStageFlagBits::eCompute, DEMO_SHADER_DIR "/test.comp.spirv")
+        .AddStage(vk::ShaderStageFlagBits::eCompute, DEMO_SHADER_DIR "/test.comp.spirv ")
         .Build();
     }
 
@@ -67,7 +69,8 @@ public:
         vk::WriteDescriptorSet write_descriptor = img.GetWriteDescriptorSet(0, &descriptor_image_info);
         cmd->pushDescriptorSet(vk::PipelineBindPoint::eCompute, compute_shader.GetPipelineLayout(), 0, 1, &write_descriptor);
 
-        float v = 1.f;
+        static float v = 1.f;
+        v += 0.01f;
         cmd->pushConstants(compute_shader.GetPipelineLayout(), vk::ShaderStageFlagBits::eAll, 0, sizeof(float), &v);
         compute_shader.Bind(cmd.buf);
         cmd->dispatch(img_spec.size.x / 8, img_spec.size.y / 8, 1);
