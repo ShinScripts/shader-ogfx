@@ -45,21 +45,24 @@ float fbm (vec2 st) { // https://thebookofshaders.com/13/
 }
 
 void main() {
-    vec2 pixel_coordinate = vec2(gl_GlobalInvocationID.xy);
-    vec2 image_resolution = vec2(imageSize(storageImage));
+    vec2 pixelCoordinate = vec2(gl_GlobalInvocationID.xy);
+    vec2 imageResolution = vec2(imageSize(storageImage));
 
     // center and normalize coordinates
-    vec2 uv = (pixel_coordinate - 0.5 * image_resolution.xy) / image_resolution.y;
+    vec2 uv = (pixelCoordinate - 0.5 * imageResolution.xy) / imageResolution.y;
 
     // distance from the center
     float r = length(uv);
+
+    // scrolling noise
+    float movingNoise = fbm(uv * 4.0 + push_constants.time * 0.2);
 
     // soft circle
     float circle = smoothstep(0.4, 0.0, r);
 
     // multiply the circle by the noise and color (https://ohmycolor.app/color-picker/)
-    vec3 color = vec3(0.1, 0.6, 0.9) * circle;
+    vec3 color = vec3(0.1, 0.6, 0.9) * circle * movingNoise;
 
-    vec4 final_color = vec4(color, 1.0);
-    imageStore(storageImage, ivec2(pixel_coordinate), final_color);
+    vec4 finalColor = vec4(color, 1.0);
+    imageStore(storageImage, ivec2(pixelCoordinate), finalColor);
 }
