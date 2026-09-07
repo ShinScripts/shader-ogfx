@@ -1,5 +1,7 @@
 #pragma once
 
+#include <GLFW/glfw3.h>
+
 #include "ogfx/Engine.h"
 #include "ogfx/Gui.h"
 #include "ogfx/VkCommands.h"
@@ -69,8 +71,7 @@ public:
         vk::WriteDescriptorSet write_descriptor = img.GetWriteDescriptorSet(0, &descriptor_image_info);
         cmd->pushDescriptorSet(vk::PipelineBindPoint::eCompute, compute_shader.GetPipelineLayout(), 0, 1, &write_descriptor);
 
-        static float v = 1.f;
-        v += 0.01f;
+        float v = (float)glfwGetTime();
         cmd->pushConstants(compute_shader.GetPipelineLayout(), vk::ShaderStageFlagBits::eAll, 0, sizeof(float), &v);
         compute_shader.Bind(cmd.buf);
         cmd->dispatch(img_spec.size.x / 8, img_spec.size.y / 8, 1);

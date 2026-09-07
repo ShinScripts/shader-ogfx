@@ -12,7 +12,7 @@ layout(set = 0, binding = 0, rgba8) uniform image2D storageImage;
 // --------------
 // https://gist.github.com/clauswilke/c39feab04463b779200dfa68d6890b5a
 float rand(vec2 n) {
-    return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+    return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 1.5453);
 }
 
 float noise(vec2 p){
@@ -55,7 +55,7 @@ void main() {
     float r = length(uv);
 
     // scrolling noise
-    float movingNoise = fbm(uv * 4.0 + push_constants.time * 0.2);
+    float movingNoise = fbm(uv * 4.0 + push_constants.time * 0.1);
 
     // soft circle
     float circle = smoothstep(0.4, 0.0, r);
