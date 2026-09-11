@@ -11,8 +11,13 @@ layout(set = 0, binding = 0, rgba8) uniform image2D storageImage;
 
 // --------------
 // https://gist.github.com/clauswilke/c39feab04463b779200dfa68d6890b5a
-float rand(vec2 n) {
-    return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 1.5453);
+float rand(vec2 co){
+    co = abs(co);
+    uvec2 v = uvec2(co * 1000.0); // scale to preserve some fraction
+    v = v * uvec2(1103515245u, 12345u) + 6789u;
+    uint h = v.x ^ v.y;
+    h = h * 0x27d4eb2du;
+    return float(h & 0x00ffffffu) / float(0x01000000u);
 }
 
 float noise(vec2 p){
@@ -30,18 +35,18 @@ float noise(vec2 p){
 
 #define OCTAVES 6
 float fbm (vec2 st) { // https://thebookofshaders.com/13/
-                      // Initial values
-                      float value = 0.0;
-                      float amplitude = .5;
-                      float frequency = 0.;
+      // Initial values
+      float value = 0.0;
+      float amplitude = .5;
+      float frequency = 0.;
 
-                      // Loop of octaves
-                      for (int i = 0; i < OCTAVES; i++) {
-                          value += amplitude * noise(st);
-                          st *= 2.;
-                          amplitude *= .5;
-                      }
-                      return value;
+      // Loop of octaves
+      for (int i = 0; i < OCTAVES; i++) {
+          value += amplitude * noise(st);
+          st *= 2.;
+          amplitude *= .5;
+      }
+      return value;
 }
 
 void main() {
@@ -49,19 +54,40 @@ void main() {
     vec2 imageResolution = vec2(imageSize(storageImage));
 
     // center and normalize coordinates
-    vec2 uv = (pixelCoordinate - 0.5 * imageResolution.xy) / imageResolution.y;
+    vec2 uv = (pixelCoordinate - 0.5 * imageResolution.xy) / imageResolution.y * 1.6;
 
     // distance from the center
     float r = length(uv);
+    float a = atan(uv.y, uv.x);
 
-    // scrolling noise
-    float movingNoise = fbm(uv * 4.0 + push_constants.time * 0.1);
+    // move the texture to simulate flow
+    vec2 drift = vec2(push_constants.time * 0.015, push_constants.time * 0.01);
 
-    // soft circle
-    float circle = smoothstep(0.4, 0.0, r);
+    float warpLevel = 3.7;
+    vec2 warpedUV = uv + fbm(uv * warpLevel + push_constants.time * 0.04) * 0.25;
+    float warpedR = length(warpedUV);
 
-    // multiply the circle by the noise and color (https://ohmycolor.app/color-picker/)
-    vec3 color = vec3(0.1, 0.6, 0.9) * circle * movingNoise;
+    // colors from (https://ohmycolor.app/color-picker/)
+    vec3 color = vec3(0.0);
+  
+    // inner blue circle
+    float core = smoothstep(0.35, 0.0, warpedR);
+    color += core * vec3(0.2, 0.25, 0.45);
+
+    // bright cyan ring around the circle
+    float innerRing = smoothstep(0.1, 0.25, warpedR) * smoothstep(0.4, 0.25, warpedR);
+    color += innerRing * vec3(0.1, 0.7, 0.9) * (0.4 + 0.6 * fbm(uv * 8.0 - drift * 2.0));
+
+    // orange middle ring surrounding the cyan ring
+    float midRing = smoothstep(0.18, 0.35, warpedR) * smoothstep(0.6, 0.35, warpedR);
+    color += midRing * vec3(1.0, 0.5, 0.1) * fbm(uv * 5.0 + 2.0 + drift) * 1.2;
+
+    float outerShell = smoothstep(0.25, 0.5, warpedR) * smoothstep(0.9, 0.5, warpedR);
+    float asymmetry = sin(a * 2.0 + 1.5 + push_constants.time * 0.2) * 0.5 + 0.5; // Brighter points orbit slowly
+    color += outerShell * vec3(0.7, 0.15, 0.05) * (0.3 + 0.7 * fbm(uv * 3.5 - drift * 0.5)) * (0.4 + 0.6 * asymmetry);
+
+    // float starStrength = pow(fbm(uv * 20.0), 10.0) * 10.0;
+    // color += starStrength;
 
     vec4 finalColor = vec4(color, 1.0);
     imageStore(storageImage, ivec2(pixelCoordinate), finalColor);
