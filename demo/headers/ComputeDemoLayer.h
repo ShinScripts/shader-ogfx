@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <string>
 
 #include "ogfx/Engine.h"
 #include "ogfx/Gui.h"
@@ -31,7 +32,11 @@ public:
             OGFX_VK_CHECK(ogfx::VkContext::GetLogicalDevice().device.createSemaphore(&semaphore_create_info, nullptr, &m_frame_data[i].render_semaphore));
         }
 
-        system("glslc C:\\Users\\shin\\Desktop\\ogfx\\demo\\shaders\\test.comp -o C:\\Users\\shin\\Desktop\\ogfx\\demo\\shaders\\test.comp.spirv");
+        {
+            std::string shaderDir = DEMO_SHADER_DIR;
+            std::string cmd = "glslc " + shaderDir + "/test.comp -o " + shaderDir + "/test.comp.spirv";
+            system(cmd.c_str());
+        }
 
         compute_shader
         .AddStage(vk::ShaderStageFlagBits::eCompute, DEMO_SHADER_DIR "/test.comp.spirv ")
